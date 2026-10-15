@@ -121,3 +121,4 @@ sudo bash switch-http.sh https
 ```
 
 **Warning:** HTTP does not encrypt passwords or session cookies. Never forward port 80 to the public Internet or use HTTP on untrusted networks. Apache access rules are not a substitute for firewall and router restrictions. This mode has not been tested on a clean Debian host; test it on a non-production machine first. It is not a standalone installer and requires a working HTTPS installation. Keep the backup directory until HTTPS is restored.
+<img width="1891" height="1077" alt="immagine" src="https://github.com/user-attachments/assets/b094457d-b5e9-4dd9-a27a-ef11ebd2e5a3" />
