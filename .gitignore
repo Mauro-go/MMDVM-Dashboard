@@ -1,0 +1,45 @@
+# Configurazione personale
+config/dashboard.ini
+config/*.bak*
+config/*.old
+
+# Credenziali e segreti
+.env
+.env.*
+*.key
+*.pem
+admin.json
+session-secret
+setup-token
+
+# Immagini personalizzate
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.svg
+*.ico
+
+# Backup e file temporanei
+*.bak
+*.bak-*
+*.bak_*
+*.old
+*.orig
+*~
+*.swp
+*.tmp
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Log e database locali
+*.log
+*.db
+*.sqlite
+*.sqlite3
