@@ -940,15 +940,17 @@ tbody tr:last-child td { border-bottom: none; }
 
 <table>
 <colgroup>
-    <col style="width:19%">
-    <col style="width:8%">
+    <col style="width:13%">
+    <col style="width:7%">
+    <col style="width:7%">
+    <col style="width:15%">
+    <col style="width:12%">
+    <col style="width:6%">
+    <col style="width:7%">
+    <col style="width:6%">
     <col style="width:9%">
-    <col style="width:16%">
-    <col style="width:13%">
-    <col style="width:7%">
-    <col style="width:8%">
-    <col style="width:7%">
-    <col style="width:13%">
+    <col style="width:12%">
+    <col style="width:6%">
 </colgroup>
 
 <thead>
@@ -961,12 +963,14 @@ tbody tr:last-child td { border-bottom: none; }
     <th data-i18n="slot">Slot</th>
     <th data-i18n="duration">Durata</th>
     <th data-i18n="ber">BER</th>
-    <th data-i18n="rssi_loss">RSSI / Loss</th>
+    <th>S-meter</th>
+    <th>RSSI (dBm)</th>
+    <th>Loss</th>
 </tr>
 </thead>
 
 <tbody id="heard">
-<tr><td colspan="9" data-i18n="loading">Caricamento...</td></tr>
+<tr><td colspan="11" data-i18n="loading">Caricamento...</td></tr>
 </tbody>
 </table>
 
@@ -1223,20 +1227,61 @@ function renderHeard() {
 
     if (!events.length) {
         tbody.innerHTML =
-            `<tr><td colspan="9" class="muted" style="text-align:center;padding:28px">${t("no_activity_24h")}</td></tr>`;
+            `<tr><td colspan="11" class="muted" style="text-align:center;padding:28px">${t("no_activity_24h")}</td></tr>`;
         return;
     }
 
     for (const e of events) {
         const tr = document.createElement("tr");
 
-        let quality = "";
+        // RSSI: conserva tutte le misurazioni originali.
+        // Per lo S-meter usa il valore centrale, se disponibile.
+        const rssiRaw = e.direction === "RF" &&
+            e.rssi !== null && e.rssi !== undefined
+            ? String(e.rssi).trim() : "";
 
-        if (e.direction === "RF" && e.rssi)
-            quality = e.rssi + " dBm";
+        const rssiValues = rssiRaw
+            .split("/")
+            .map(v => Number(v.trim()))
+            .filter(v => Number.isFinite(v) && v < 0);
 
-        if (e.direction === "NET" && e.loss !== null)
-            quality = e.loss + "% loss";
+        const rssiDbm = rssiValues.length
+            ? rssiValues[Math.floor(rssiValues.length / 2)]
+            : null;
+
+        let smeter = "";
+
+        if (rssiDbm !== null) {
+            if (rssiDbm >= -93) {
+                const over = rssiDbm + 93;
+                smeter = over > 0 ? "S9<small style=\"font-size:10px;vertical-align:super;color:#ff4444\">+" + Math.min(30, Math.round(over / 10) * 10) + "</small>" : "S9";
+            } else {
+                const level = Math.round(9 + (rssiDbm + 93) / 6);
+                smeter = "S" + Math.max(0, Math.min(8, level));
+            }
+        }
+
+
+        if (rssiDbm !== null) {
+            const active = Math.max(0, Math.min(10,
+                Math.round((rssiDbm + 141) / 78 * 10)));
+
+            const bars = Array.from({length: 10}, (_, i) => {
+                const height = 4 + i * 1.2;
+                const color = i < 5 ? "#22c55e" :
+                              i < 8 ? "#eab308" : "#ef4444";
+                const opacity = i < active ? 1 : 0.15;
+                return `<span style="display:inline-block;width:4px;height:${height}px;background:${color};opacity:${opacity};border-radius:1px"></span>`;
+            }).join("");
+
+            smeter += `<span style="display:inline-flex;align-items:flex-end;gap:1px;height:15px;margin-left:6px;vertical-align:middle">${bars}</span>`;
+        }
+
+        const rssiText = rssiRaw ? rssiRaw + " dBm" : "";
+
+        const lossText = e.direction === "NET" &&
+            e.loss !== null && e.loss !== undefined
+            ? e.loss + "% loss" : "";
 
         const modeClass = "mode-" + e.mode;
 
@@ -1266,7 +1311,9 @@ function renderHeard() {
             <td>${e.slot ? "TS"+e.slot : ""}</td>
             <td>${e.duration !== null ? e.duration.toFixed(1)+" s" : ""}</td>
             <td>${e.ber !== null ? e.ber.toFixed(1)+"%" : ""}</td>
-            <td>${quality}</td>
+            <td>${smeter}</td>
+            <td>${rssiText}</td>
+            <td>${lossText}</td>
         `;
 
         tbody.appendChild(tr);
